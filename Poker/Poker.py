@@ -1,6 +1,8 @@
 import random
+import time
 
 names = ['You', 'Steve', 'Geoff', 'Tim', 'Georg', 'Lucy', 'Timagain']
+speed = 1.5
 
 
 class Game:
@@ -88,32 +90,41 @@ class Game:
             card_two = game.random_card()
             player.cards.append(card_two)
         if self.players[0].Dealer:
+            time.sleep(speed)
             print('\nYou are the dealer, blinds are: ' + str(game.lb) + ' and ' + str(game.bb) + '.')
         elif self.players[0].BB == 1:
+            time.sleep(speed)
             print('\nYou are the big blind. You have automatically bet ' + str(game.bb) + '.')
         elif self.players[0].LB == 1:
+            time.sleep(speed)
             print('\nYou are the little blind. You have automatically bet ' + str(game.lb) + '.')
         else:
+            time.sleep(speed)
             print('\nBlinds are: ' + str(game.lb) + ' and ' + str(game.bb) + '.')
+        time.sleep(speed)
         print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and ' +
               self.players[0].cards[1].show_card())
+        time.sleep(speed)
         print('You have ' + str(self.players[0].chips) + ' chips')
 
     def flop(self):
         card_one = self.random_card()
         card_two = self.random_card()
         card_three = self.random_card()
+        time.sleep(speed)
         print('\nThe dealer deals a ' + card_one.show_card() + ', a ' + card_two.show_card() + ' and a ' +
               card_three.show_card() + ' to the table.')
         self.table_cards = [card_one, card_two, card_three]
 
     def turn(self):
         card_four = self.random_card()
+        time.sleep(speed)
         print('\nThe dealer deals a ' + card_four.show_card() + ' to the table.')
         self.table_cards.append(card_four)
 
     def river(self):
         card_five = self.random_card()
+        time.sleep(speed)
         print('\nThe river is a ' + card_five.show_card() + '. There will be no more cards dealt.')
         self.table_cards.append(card_five)
 
@@ -122,6 +133,7 @@ class Game:
         bb = self.bb
         bb_pos = self.find_bb()
         lb_pos = self.find_lb()
+        time.sleep(speed)
         print(self.players[lb_pos].name + ' is the small blind and bets ' + str(game.lb) + '. ' + self.players[
             bb_pos].name + ' is the big blind and bets ' + str(bb) + '.')
         self.bets[bb_pos] = bb
@@ -138,20 +150,25 @@ class Game:
                 if r not in [0, 1]:
                     # call
                     if self.bets[player_index] == to_call:
+                        time.sleep(speed)
                         print(player.name + ' checks.')
                     else:
                         self.bets[player_index] = to_call
+                        time.sleep(speed)
                         print(player.name + ' calls ' + str(to_call) + '.')
                 elif r == 1:
                     # raise
                     self.bets[player_index] = to_call + bb
+                    time.sleep(speed)
                     print(player.name + ' raises to ' + str(to_call + bb) + '.')
                 else:
                     # fold
                     if to_call != self.bets[player_index]:
                         folded = 1
+                        time.sleep(speed)
                         print(player.name + ' folds.')
                     else:
+                        time.sleep(speed)
                         print(player.name + ' checks.')
                 i += 1
                 new_player_index = self.active_players[(self.active_players.index(player_index) + 1) % len(self.active_players)]
@@ -162,24 +179,29 @@ class Game:
                 to_call = max(self.bets)
                 user_acted = 0
                 while user_acted == 0:
+                    time.sleep(speed)
                     action = raw_input('What would you like to do?\n')
                     if action == 'check':
                         if max(self.bets) == 0:
                             user_acted = 1
                         else:
+                            time.sleep(speed)
                             print('You can\'t check when there is already a non-zero bet on the table.')
                     elif action == 'call':
                         self.bets[0] = to_call
                         user_acted = 1
+                        time.sleep(speed)
                         print('You bet ' + str(to_call) + ' chips.')
                     elif action == 'raise':
                         self.bets[0] = to_call + bb
                         user_acted = 1
+                        time.sleep(speed)
                         print('You raise the bet to ' + str(to_call + bb))
                     elif action == 'fold':
                         folded = 1
                         user_acted = 1
                     else:
+                        time.sleep(speed)
                         print('Please choose from: check, call, raise , or fold.')
                 new_player_index = self.active_players[(self.active_players.index(player_index) + 1) % len(self.active_players)]
                 if folded == 1:
@@ -190,6 +212,7 @@ class Game:
             player_index = player.position
             self.pot += self.bets[player_index]
             self.players[player_index].chips -= self.bets[player_index]
+        time.sleep(speed)
         print('There are ' + str(self.pot) + ' chips in the pot.')
 
     def betting_round(self):
@@ -198,6 +221,7 @@ class Game:
         lb_pos = self.find_lb()
         while lb_pos not in self.active_players:
             lb_pos += 1
+        time.sleep(speed)
         print(self.players[lb_pos].name + ' to bet first.')
         i = 0
         player_index = lb_pos
@@ -211,20 +235,25 @@ class Game:
                 if r not in [0, 1]:
                     # call
                     if self.bets[player_index] == to_call:
+                        time.sleep(speed)
                         print(player.name + ' checks.')
                     else:
                         self.bets[player_index] = to_call
+                        time.sleep(speed)
                         print(player.name + ' calls ' + str(to_call) + '.')
                 elif r == 1:
                     # raise
                     self.bets[player_index] = to_call + bb
+                    time.sleep(speed)
                     print(player.name + ' raises to ' + str(to_call + bb) + '.')
                 else:
                     # fold
                     if to_call != self.bets[player_index]:
                         folded = 1
+                        time.sleep(speed)
                         print(player.name + ' folds.')
                     else:
+                        time.sleep(speed)
                         print(player.name + ' checks.')
                 i += 1
                 new_player_index = self.active_players[
@@ -236,24 +265,29 @@ class Game:
                 to_call = max(self.bets)
                 user_acted = 0
                 while user_acted == 0:
+                    time.sleep(speed)
                     action = raw_input('What would you like to do?\n')
                     if action == 'check':
                         if max(self.bets) == 0:
                             user_acted = 1
                         else:
+                            time.sleep(speed)
                             print('You can\'t check when there is already a non-zero bet on the table.')
                     elif action == 'call':
                         self.bets[0] = to_call
                         user_acted = 1
+                        time.sleep(speed)
                         print('You bet ' + str(to_call) + ' chips.')
                     elif action == 'raise':
                         self.bets[0] = to_call + bb
                         user_acted = 1
+                        time.sleep(speed)
                         print('You raise the bet to ' + str(to_call + bb))
                     elif action == 'fold':
                         folded = 1
                         user_acted = 1
                     else:
+                        time.sleep(speed)
                         print('Please choose from: check, call, raise , or fold.')
                 new_player_index = self.active_players[
                     (self.active_players.index(player_index) + 1) % len(self.active_players)]
@@ -277,6 +311,8 @@ class Game:
             player_position = self.active_players[0]
         else:
             player_position = 0
+        time.sleep(0.4)
+        time.sleep(speed)
         print(self.players[player_position].name + ' won a pot of ' + str(self.pot) + ' chips.\n')
         self.round += 1
         self.used_cards = []
@@ -299,6 +335,7 @@ class Game:
         for player in self.players:
             if player.chips <= 0:
                 self.remove_player(player.position)
+                time.sleep(speed)
                 print('Player ' + str(player.position) + ' has been knocked out!\n')
         if self.round % 5 == 0:
             self.raise_blinds()
@@ -307,9 +344,10 @@ class Game:
         tc = self.table_cards
         if tc:
             cards = hand.append(tc)
-            highest = self.high_card_check(cards)
-            print('You have a high card with ' + highest.show_card())
-#            pair_check(cards)
+            if self.pair_check(cards):
+              print(self.pair(cards))
+            elif self.high_card_check(cards):
+              print(high_card(cards))
 #            three_check(cards)
 #            straight_check(cards)
 #            flush_check(cards)
@@ -319,13 +357,31 @@ class Game:
 #            royal_flush_check(cards)
 
     def high_card_check(self, cards):
-        highest = 0
-        high_card = ''
-        for c in cards:
-            if c.number > highest:
-                highest = c.number
-                high_card = c
-        return high_card
+        return 1
+
+    def high_card(self, cards):
+      highest = 0
+      high_card = ''
+      for c in cards:
+          if c.number > highest:
+              highest = c.number
+              high_card = c
+      time.sleep(speed)
+      return ('You have a ' + str(high_card.value) + ' high.')
+
+    def pair_check(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                if card1.isequal(card2) & card1.number == card2.number:
+                  return 1
+                
+
+    def pair(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                if card1.isequal(card2) & card1.number == card2.number:
+                  time.sleep(speed)
+                  return ('You have a pair of ' + str(card1.value))
 
 
 class Player:
@@ -376,6 +432,12 @@ class Card:
         else:
             self.number = int(self.value)
 
+    def isequal(self, card2):
+        if self.number == card2.number & self.suit == card2.suit:
+            return 1
+        else:
+            return 0
+            
     def show_card(self):
         if self.value == 'J':
             val = 'Jack'
