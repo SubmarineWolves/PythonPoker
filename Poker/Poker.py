@@ -1,8 +1,9 @@
 import random
 import time
 
-names = ['You', 'Steve', 'Geoff', 'Tim', 'Georg', 'Lucy', 'Timagain']
-speed = 1.5
+names = ['You', 'Steve', 'Betsy', 'Tim', 'Georg', 'Lucy', 'Timagain']
+speed = 0.5
+turn_end_speed = 1.5
 
 
 class Game:
@@ -307,19 +308,20 @@ class Game:
         return True
 
     def end_of_turn(self):
-        if len(self.active_players) == 1:
-            player_position = self.active_players[0]
-        else:
-            player_position = 0
-        time.sleep(0.4)
+        max_score = 0
+        for j in range(len(self.active_players)):
+            max_score = max(max_score, self.hand_score(j))
+        for j in range(len(self.active_players)):
+            if max_score == self.hand_score(j):
+                winner = self.active_players[j]
         time.sleep(speed)
-        print(self.players[player_position].name + ' won a pot of ' + str(self.pot) + ' chips.\n')
+        print(self.players[winner].name + ' won a pot of ' + str(self.pot) + ' chips.\n')
         self.round += 1
         self.used_cards = []
         bbpos = self.find_bb()
         for player in self.players:
             player.cards = []
-            if player.position == player_position:
+            if player.position == self.players[winner].position:
                 player.chips += self.pot
             if player.BB == 1:
                 player.LB = 1
@@ -340,24 +342,39 @@ class Game:
         if self.round % 5 == 0:
             self.raise_blinds()
 
-    def hand_reader(self, hand):
+    def hand_reader(self, n):
+        player_number = self.active_players[n]
+        hand = self.players[player_number].cards
         tc = self.table_cards
         if tc:
-            cards = hand.append(tc)
-            if self.pair_check(cards):
-              print(self.pair(cards))
-            elif self.high_card_check(cards):
-              print(high_card(cards))
-#            three_check(cards)
-#            straight_check(cards)
-#            flush_check(cards)
-#            full_house_check(cards)
-#            four_check(cards)
-#            straight_flush_check(cards)
-#            royal_flush_check(cards)
+            cards = hand+tc
+        else: cards = hand
 
-    def high_card_check(self, cards):
-        return 1
+        if self.royal_flush_check(cards):
+            string = self.royal_flush(cards)
+        elif self.straight_flush_check(cards):
+            string = self.straight_flush(cards)
+        elif self.four_check(cards):
+            string = self.four(cards)
+        elif self.full_house_check(cards):
+            string = self.full_house(cards)
+        elif self.flush_check(cards):
+            string = self.flush(cards)
+        elif self.straight_check(cards):
+            string = self.straight(cards)
+        elif self.three_check(cards):
+            string = self.three(cards)
+        elif self.two_pair_check(cards):
+            string = self.two_pair(cards)
+        elif self.pair_check(cards):
+            string = self.pair(cards)
+        else:
+            string = self.high_card(cards)
+
+        if self.players[player_number].name == 'You':
+            print 'You have' + string
+        else:
+            print self.players[player_number].name + ' has' + str(string)
 
     def high_card(self, cards):
       highest = 0
@@ -367,21 +384,366 @@ class Game:
               highest = c.number
               high_card = c
       time.sleep(speed)
-      return ('You have a ' + str(high_card.value) + ' high.')
+      return ' a high card ' + str(high_card.word_value) + '.'
+
+    def high_card_score(self, cards):
+        highest = 0
+        high_card = ''
+        for c in cards:
+            if c.number > highest:
+                highest = c.number
+                high_card = c
+        return 0.01 * high_card.number
 
     def pair_check(self, cards):
         for card1 in cards:
             for card2 in cards:
-                if card1.isequal(card2) & card1.number == card2.number:
+                if (card1.number == card2.number) and (not card1.isequal(card2)):
                   return 1
-                
 
     def pair(self, cards):
         for card1 in cards:
             for card2 in cards:
-                if card1.isequal(card2) & card1.number == card2.number:
-                  time.sleep(speed)
-                  return ('You have a pair of ' + str(card1.value))
+                if (card1.number == card2.number) and (not card1.isequal(card2)):
+                  return ' a pair of ' + str(card1.word_value) + 's'
+
+    def pair_score(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                if (card1.number == card2.number) and (not card1.isequal(card2)):
+                  return card1.number * 0.01
+
+    def two_pair_check(self, cards):
+        if len(cards) < 4:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    if not card2.isequal(card1):
+                        for card3 in cards:
+                            if card3.is_not_in_list([card1, card2]):
+                                for card4 in cards:
+                                    if card4.is_not_in_list([card1, card2, card3]):
+                                        if card1.number == card2.number and card3.number == card4.number:
+                                            return 1
+
+    def two_pair(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                if not card2.isequal(card1):
+                    for card3 in cards:
+                        if card3.is_not_in_list([card1, card2]):
+                            for card4 in cards:
+                                if card4.is_not_in_list([card1, card2, card3]):
+                                    if len(cards)>=6:
+                                        for card5 in cards:
+                                            if card5.is_not_in_list([card1, card2, card3, card4]):
+                                                for card6 in cards:
+                                                    if card6.is_not_in_list([card1, card2, card3, card4, card5]):
+                                                        if card1.number == card2.number and card3.number == card4.number and card5.number == card6.number:
+                                                            if card1.number == min(card1.number, card5.number, card3.number):
+                                                                return ' two pair with ' + str(card5.word_value) + 's and ' + str(card3.word_value) + 's'
+                                                            elif card3.number == min(card1.number, card3.number, card5.number):
+                                                                return ' two pair with ' + str(card1.word_value) + 's and ' + str(card5.word_value) + 's'
+                                                            else: return ' two pair with ' + str(card1.word_value) + 's and ' + str(card3.word_value) + 's'
+                                                        elif card1.number == card2.number and card3.number == card4.number:
+                                                            return ' two pair with ' + str(
+                                                                card1.word_value) + 's and ' + str(
+                                                                card3.word_value) + 's'
+                                    elif card1.number == card2.number and card3.number == card4.number:
+                                        return ' two pair with ' + str(card1.word_value) + 's and ' + str(card3.word_value) + 's'
+        return ' created an error, you bitch.'
+
+    def two_pair_score(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                if not card2.isequal(card1):
+                    for card3 in cards:
+                        if card3.is_not_in_list([card1, card2]):
+                            for card4 in cards:
+                                if card4.is_not_in_list([card1, card2, card3]):
+                                    if len(cards)>=6:
+                                        for card5 in cards:
+                                            if card5.is_not_in_list([card1, card2, card3, card4]):
+                                                for card6 in cards:
+                                                    if card6.is_not_in_list([card1, card2, card3, card4, card5]):
+                                                        if card1.number == card2.number and card3.number == card4.number and card5.number == card6.number:
+                                                            if card1.number == min(card1.number, card5.number, card3.number):
+                                                                if card5.number < card3.number:
+                                                                    return int(card3.number) * 0.01 + int(card5.number) * 0.0001
+                                                                else:
+                                                                    return int(card5.number) * 0.01 + int(card3.number) * 0.0001
+                                                            elif card3.number == min(card1.number, card3.number, card5.number):
+                                                                if card5.number < card1.number:
+                                                                    return int(card1.number) * 0.01 + int(card5.number) * 0.0001
+                                                                else:
+                                                                    return int(card5.number) * 0.01 + int(card1.number) * 0.0001
+                                                            else:
+                                                                if card1.number < card3.number:
+                                                                    return int(card3.number) * 0.01 + int(card1.number) * 0.0001
+                                                                else: return int(card1.number) * 0.01 + int(card3.number) * 0.0001
+                                                        elif card1.number == card2.number and card3.number == card4.number:
+                                                            if card1.number < card3.number:
+                                                                return int(card3.number) * 0.01 + int(
+                                                                    card1.number) * 0.0001
+                                                            else:
+                                                                return int(card1.number) * 0.01 + int(
+                                                                    card3.number) * 0.0001
+                                    elif card1.number == card2.number and card3.number == card4.number:
+                                        if card1.number < card3.number:
+                                            return int(card3.number) * 0.01 + int(card1.number) * 0.0001
+                                        else: return int(card1.number) * 0.01 + int(card3.number) * 0.0001
+        return 0
+
+    def three_check(self, cards):
+        if len(cards)<3:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    for card3 in cards:
+                        if  card1.number == card2.number == card3.number and (not card1.isequal(card2)) and (
+                                not card1.isequal(card3)) and (not card3.isequal(card2)):
+                            return 1
+
+    def three(self, cards):
+        if len(cards)<3:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    for card3 in cards:
+                        if  card1.number == card2.number == card3.number and (not card1.isequal(card2)) and (
+                                not card1.isequal(card3)) and (not card3.isequal(card2)):
+                            time.sleep(speed)
+                            return ' three of a kind with ' + str(card1.word_value) + 's'
+
+    def straight_check(self, cards):
+        if len(cards)<5:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    for card3 in cards:
+                        for card4 in cards:
+                            for card5 in cards:
+                                if (card1.number == card2.number + 1) and (card2.number == card3.number + 1) and (
+                                        card3.number == card4.number + 1) and (card4.number == card5.number + 1):
+                                    return 1
+
+    def straight(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                for card3 in cards:
+                    for card4 in cards:
+                        for card5 in cards:
+                            if (card1.number == card2.number + 1) and (card2.number == card3.number + 1) and (
+                                    card3.number == card4.number + 1) and (card4.number == card5.number + 1):
+                                high = max(card1.number, card2.number, card3.number, card4.number, card5.number)
+                                if high == 11:
+                                    high = ' Jack'
+                                elif high == 12:
+                                    high = ' Queen'
+                                elif high == 13:
+                                    high = ' King'
+                                elif high == 14:
+                                    high = 'n Ace'
+                                else: high = ' ' + str(high)
+                                return ' a' + high + ' high straight.'
+
+    def flush_check(self, cards):
+        if len(cards) < 5:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    if not card2.isequal(card1):
+                        for card3 in cards:
+                            if (not card3.isequal(card2)) and (not card3.isequal(card1)):
+                                for card4 in cards:
+                                    if (not card4.isequal(card3)) and (not card4.isequal(card2)) and \
+                                            (not card4.isequal(card1)):
+                                        for card5 in cards:
+                                            if card1.suit == card2.suit == card3.suit == card4.suit == card5.suit and (
+                                                    not card5.isequal(card4)) and (not card5.isequal(card3)) and \
+                                                    (not card5.isequal(card2)) and (not card5.isequal(card1)):
+                                                return 1
+
+    def flush(self, cards):
+        if len(cards) < 5:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    if not card2.isequal(card1):
+                        for card3 in cards:
+                            if (not card3.isequal(card2)) and (not card3.isequal(card1)):
+                                for card4 in cards:
+                                    if (not card4.isequal(card3)) and (not card4.isequal(card2)) and \
+                                            (not card4.isequal(card1)):
+                                        for card5 in cards:
+                                            if card1.suit == card2.suit == card3.suit == card4.suit == card5.suit and (
+                                                    not card5.isequal(card4)) and (not card5.isequal(card3)) and \
+                                                    (not card5.isequal(card2)) and (not card5.isequal(card1)):
+                                                soot = card1.suit
+                                                if soot == 'H':
+                                                    sooot = 'heart'
+                                                elif soot == 'S':
+                                                    sooot = 'spade'
+                                                elif soot == 'D':
+                                                    sooot = 'diamond'
+                                                else: sooot = 'club'
+                                                return ' a ' + sooot + ' flush.'
+
+    def full_house_check(self, cards):
+        if len(cards) < 5:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    if not card2.isequal(card1):
+                        for card3 in cards:
+                            if (not card3.isequal(card2)) and (not card3.isequal(card1)):
+                                for card4 in cards:
+                                    if (not card4.isequal(card3)) and (not card4.isequal(card2)) and \
+                                            (not card4.isequal(card1)):
+                                        for card5 in cards:
+                                            if card1.number == card2.number and card3.number == card4.number == card5.number and (
+                                                    not card5.isequal(card4)) and (not card5.isequal(card3)) and \
+                                                    (not card5.isequal(card2)) and (not card5.isequal(card1)):
+                                                return 1
+
+    def full_house(self, cards):
+        if len(cards) < 5:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    if not card2.isequal(card1):
+                        for card3 in cards:
+                            if (not card3.isequal(card2)) and (not card3.isequal(card1)):
+                                for card4 in cards:
+                                    if (not card4.isequal(card3)) and (not card4.isequal(card2)) and \
+                                            (not card4.isequal(card1)):
+                                        for card5 in cards:
+                                            if card1.number == card2.number and card3.number == card4.number == card5.number and (
+                                                    not card5.isequal(card4)) and (not card5.isequal(card3)) and \
+                                                    (not card5.isequal(card2)) and (not card5.isequal(card1)):
+                                                return ' a full house with ' + card3.word_value + 's over ' + card1.word_value + 's'
+
+    def four_check(self, cards):
+        if len(cards) < 4:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    if not card2.isequal(card1):
+                        for card3 in cards:
+                            if (not card3.isequal(card2)) and (not card3.isequal(card1)):
+                                for card4 in cards:
+                                    if (not card4.isequal(card3)) and (not card4.isequal(card2)) and \
+                                            (not card4.isequal(card1)):
+                                        if card1.number == card2.number == card3.number == card4.number:
+                                            return 1
+
+    def four(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                if not card2.isequal(card1):
+                    for card3 in cards:
+                        if (not card3.isequal(card2)) and (not card3.isequal(card1)):
+                            for card4 in cards:
+                                if (not card4.isequal(card3)) and (not card4.isequal(card2)) and \
+                                        (not card4.isequal(card1)):
+                                    if card1.number == card2.number == card3.number == card4.number:
+                                        return ' four of a kind with ' + card1.word_value + 's'
+
+    def straight_flush_check(self, cards):
+        if len(cards) < 5:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    for card3 in cards:
+                        for card4 in cards:
+                            for card5 in cards:
+                                if (card1.number == card2.number + 1) and (card2.number == card3.number + 1) and (
+                                        card3.number == card4.number + 1) and (card4.number == card5.number + 1):
+                                    if card1.suit == card2.suit == card3.suit == card4.suit:
+                                        return 1
+
+    def straight_flush(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                for card3 in cards:
+                    for card4 in cards:
+                        for card5 in cards:
+                            if (card1.number == card2.number + 1) and (card2.number == card3.number + 1) and (
+                                    card3.number == card4.number + 1) and (card4.number == card5.number + 1) and \
+                                    (card1.suit == card2.suit == card3.suit == card4.suit):
+                                high = max(card1.number, card2.number, card3.number, card4.number, card5.number)
+                                if high == 11:
+                                    high = 'Jack'
+                                elif high == 12:
+                                    high = 'Queen'
+                                elif high == 13:
+                                    high = 'King'
+                                return ' a ' + high + ' high straight flush.'
+
+    def royal_flush_check(self, cards):
+        if len(cards) < 5:
+            return 0
+        else:
+            for card1 in cards:
+                for card2 in cards:
+                    for card3 in cards:
+                        for card4 in cards:
+                            for card5 in cards:
+                                if (card1.number == card2.number + 1) and (card2.number == card3.number + 1) and (
+                                        card3.number == card4.number + 1) and (card4.number == card5.number + 1):
+                                    if card1.suit == card2.suit == card3.suit == card4.suit and (
+                                        14 == max(card1.number, card2.number, card3.number, card4.number, card5.number)):
+                                        return 1
+
+    def royal_flush(self, cards):
+        for card1 in cards:
+            for card2 in cards:
+                for card3 in cards:
+                    for card4 in cards:
+                        for card5 in cards:
+                            if (card1.number == card2.number + 1) and (card2.number == card3.number + 1) and (
+                                    card3.number == card4.number + 1) and (card4.number == card5.number + 1) and \
+                                    (card1.suit == card2.suit == card3.suit == card4.suit):
+                                return ' a royal flush of ' + card1.suit + '.'
+
+    def hand_score(self, n):
+        player_number = self.active_players[n]
+        hand = self.players[player_number].cards
+        tc = self.table_cards
+        if tc:
+            cards = hand + tc
+        else:
+            cards = hand
+        if self.royal_flush_check(cards):
+            score = 9
+        elif self.straight_flush_check(cards):
+            score = 8
+        elif self.four_check(cards):
+            score = 7
+        elif self.full_house_check(cards):
+            score = 6
+        elif self.flush_check(cards):
+            score = 5
+        elif self.straight_check(cards):
+            score = 4
+        elif self.three_check(cards):
+            score = 3
+        elif self.two_pair_check(cards):
+            score = 2 + self.two_pair_score(cards)
+        elif self.pair_check(cards):
+            score = 1 + self.pair_score(cards)
+        else: score = self.high_card_score(cards)
+        return score
 
 
 class Player:
@@ -423,20 +785,31 @@ class Card:
         self.number = 0
         if self.value == 'J':
             self.number = 11
+            self.word_value = 'Jack'
         elif self.value == 'Q':
             self.number = 12
+            self.word_value = 'Queen'
         elif self.value == 'K':
             self.number = 13
+            self.word_value = 'King'
         elif self.value == 'A':
             self.number = 14
+            self.word_value = 'Ace'
         else:
             self.number = int(self.value)
+            self.word_value = str(self.number)
 
-    def isequal(self, card2):
-        if self.number == card2.number & self.suit == card2.suit:
+    def isequal(self, equalcard):
+        if (self.number == equalcard.number) & (self.suit == equalcard.suit):
             return 1
         else:
             return 0
+
+    def is_not_in_list(self, cards):
+        for card in cards:
+            if self.isequal(card):
+                return 0
+        return 1
             
     def show_card(self):
         if self.value == 'J':
@@ -450,14 +823,14 @@ class Card:
         else:
             val = self.value
         if self.suit == 'H':
-            soot = 'Hearts'
+            soot = 'hearts'
         elif self.suit == 'C':
-            soot = 'Clubs'
+            soot = 'clubs'
         elif self.suit == 'D':
-            soot = 'Diamonds'
+            soot = 'diamonds'
         else:
-            soot = 'Spades'
-        return str(val + ' of ' + soot)
+            soot = 'spades'
+        return val + ' of ' + soot
 
 
 no_of_players = 6
@@ -468,17 +841,45 @@ buy_in = 200
 
 game = Game(no_of_players, big_blind, little_blind, 2, buy_in)
 
+while len(game.players) > 2:
+    game.start_of_turn()
+    game.blind_betting_round()
+    if len(game.active_players) > 1:
+        game.flop()
+        game.betting_round()
+    if len(game.active_players) > 1:
+        game.turn()
+        print 'There is a ' + game.table_cards[0].show_card() + ', a ' + game.table_cards[1].show_card() + ', a ' + \
+              game.table_cards[2].show_card() + ', and a ' + game.table_cards[3].show_card() + ' on the table.'
+        game.betting_round()
+    if len(game.active_players) > 1:
+        game.river()
+        print 'There is a ' + game.table_cards[0].show_card() + ', a ' + game.table_cards[1].show_card() + ', a ' + \
+              game.table_cards[2].show_card() + ', a ' + game.table_cards[3].show_card() + ', and a ' + game.table_cards[
+                  4].show_card() + ' on the table.'
+        game.betting_round()
+        print 'No more betting. On your backs:\n'
+    for i in range(len(game.active_players)):
+        player_number = game.active_players[i]
+        player = game.players[player_number]
+        hand = player.cards
+        card1 = player.cards[0].show_card()
+        card2 = player.cards[1].show_card()
+        name = str(player.name)
+        if player.name == 'You':
+            print 'You reveal your hand of ' +card1 + ' and ' + card2 + '.'
+        else:
+            print name + ' reveals their hand of ' + card1 + ' and ' + card2 + '.'
+        time.sleep(speed)
+        game.hand_reader(i)
+        time.sleep(speed)
+    game.end_of_turn()
+    print 'Next round begins in:'
+    time.sleep(turn_end_speed)
+    print '3'
+    time.sleep(turn_end_speed)
+    print '2'
+    time.sleep(turn_end_speed)
+    print '1'
+    time.sleep(turn_end_speed)
 
-game.start_of_turn()
-game.hand_reader(game.players[0].cards)
-game.blind_betting_round()
-if len(game.active_players) > 1:
-    game.flop()
-    game.betting_round()
-if len(game.active_players) > 1:
-    game.turn()
-    game.betting_round()
-if len(game.active_players) > 1:
-    game.river()
-    game.betting_round()
-game.end_of_turn()
