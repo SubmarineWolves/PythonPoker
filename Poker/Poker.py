@@ -1,15 +1,15 @@
 import random
 import time
 
-#TODO - All-in bets, removing players and keeping the blind orders, fix the position/number issues with betting orders, split pots, heads up rounds.
+#TODO - All-in bets, removing players and keeping the blind orders, fix the position/number issues with betting orders (think this is done), split pots, heads up rounds, allow raises by more than the standard blind.
 
-names = ['You', 'Steve', 'Betsy', 'Tim', 'Georg', 'Lucy', 'Timagain']
-speed = 0.5
+names = ['You', 'Steve', 'Betsy', 'Tim', 'Georg', 'Lucy', 'Spare Boi']
+speed = 0.2
 turn_end_speed = 1.5
 no_of_players = 6
 big_blind = 2
 little_blind = 1
-buy_in = 6
+buy_in = 2
 
 class Game:
     def __init__(self, n, bb, lb, increment, start_chips):
@@ -39,7 +39,7 @@ class Game:
             self.players = player_list
 
     def run(self):
-      while len(self.players) > 2:
+      while len(self.players) >= 2:
         self.start_of_turn()
         self.blind_betting_round()
         #Do a flop
@@ -88,6 +88,8 @@ class Game:
         time.sleep(turn_end_speed)
         print '1'
         time.sleep(turn_end_speed)
+      if self.players[0].name == 'You':
+        print('You won!!!!\nCongrendulsted!')
 
     def find_lb(self):
         for player in self.players:
@@ -157,22 +159,22 @@ class Game:
         self.pot = 0
 
         for player in self.players:
-            card_one = game.random_card()
+            card_one = self.random_card()
             player.cards.append(card_one)
-            card_two = game.random_card()
+            card_two = self.random_card()
             player.cards.append(card_two)
         if self.players[0].Dealer:
             time.sleep(speed)
-            print('\nYou are the dealer, blinds are: ' + str(game.lb) + ' and ' + str(game.bb) + '.')
+            print('\nYou are the dealer, blinds are: ' + str(self.lb) + ' and ' + str(self.bb) + '.')
         elif self.players[0].BB == 1:
             time.sleep(speed)
-            print('\nYou are the big blind. You have automatically bet ' + str(game.bb) + '.')
+            print('\nYou are the big blind. You have automatically bet ' + str(self.bb) + '.')
         elif self.players[0].LB == 1:
             time.sleep(speed)
-            print('\nYou are the little blind. You have automatically bet ' + str(game.lb) + '.')
+            print('\nYou are the little blind. You have automatically bet ' + str(self.lb) + '.')
         else:
             time.sleep(speed)
-            print('\nBlinds are: ' + str(game.lb) + ' and ' + str(game.bb) + '.')
+            print('\nBlinds are: ' + str(self.lb) + ' and ' + str(self.bb) + '.')
         time.sleep(speed)
         print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and ' +
               self.players[0].cards[1].show_card())
@@ -206,14 +208,37 @@ class Game:
         bb_pos = self.find_bb()
         lb_pos = self.find_lb()
         time.sleep(speed)
-        print(self.find_lb_name() + ' is the small blind and bets ' + str(game.lb) + '. ' + self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '.')
+        if self.find_bb_name() != self.find_lb_name():
+          if self.find_lb_name() == 'You':
+            print('You are the little blind, and you bet ' + str(bb) + '.')
+          else:
+            print(self.find_lb_name() + ' is the small blind and bets ' + str(self.lb) + '. ')
+          if self.find_bb_name() == 'You':
+            print('You are the big blind, and you bet ' + str(self.lb) + '. ')
+          else:
+            print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '.')
+        else:
+          if self.find_bb_name() == 'You':
+            print('You are the big blind, and you bet ' + str(self.bb) + '. There is no little blind.')
+          else:
+            print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '. Ther is no little blind.')
         self.bets[lb_pos] = self.lb
         self.bets[bb_pos] = bb
         i = 0
-        player_index = (bb_pos+1) % len(self.players)
+        #Here we need to make sure that when we increment the player index, it goes to a live player and not someone who is no longer active.
+        poss = [0]
+        for player in self.players:
+          poss.append(player.position)
+        player_index = (bb_pos+1) % no_of_players
+        while player_index not in poss:
+          player_index = (player_index+1) % no_of_players
         iterations = len(self.active_players)
         while i < iterations or not self.active_bets_equal():
-            player = self.players[player_index]
+            #Set player equal to the player whose position is player_index
+            for player in self.players:
+              if player.position == player_index:
+                iCantThinkOfAVariableName = player
+            player = iCantThinkOfAVariableName
             folded = 0
             if player_index != 0:
                 to_call = max(self.bets)
@@ -242,7 +267,13 @@ class Game:
                         time.sleep(speed)
                         print(player.name + ' checks.')
                 i += 1
-                new_player_index = self.active_players[(self.active_players.index(player_index) + 1) % len(self.active_players)]
+                #Get the next player_index
+                for j in range(len(self.active_players)):
+                  if self.active_players[j] == player_index:
+                    pno = j
+                pno = (pno + 1) % len(self.active_players)
+                new_player_index = self.active_players[pno]
+                #And remove this player if they folded
                 if folded == 1:
                     self.active_players.remove(player_index)
                 player_index = new_player_index
@@ -252,6 +283,7 @@ class Game:
                 while user_acted == 0:
                     time.sleep(speed)
                     action = raw_input('What would you like to do?\n')
+                    print('')
                     if action == 'check':
                         if max(self.bets) == 0:
                             user_acted = 1
@@ -300,7 +332,12 @@ class Game:
         time.sleep(speed)
         print(self.find_lb_name() + ' to bet first.')
         i = 0
-        player_index = lb_pos
+        poss = [0]
+        for player in self.players:
+          poss.append(player.position)
+        player_index = (lb_pos)
+        while player_index not in poss and player_index not in self.active_players:
+          player_index = (player_index+1) % no_of_players
         iterations = len(self.active_players)
         while i < iterations or not self.active_bets_equal():
             player = self.players[player_index]
@@ -388,6 +425,7 @@ class Game:
         return True
 
     def end_of_turn(self):
+        finish = False
         max_score = 0
         for j in range(len(self.active_players)):
             max_score = max(max_score, self.hand_score(j))
@@ -420,19 +458,25 @@ class Game:
             #Winner gets the cash
             if player.position == winpos:
                 player.chips += self.pot
-#############If that player is out, remove them#################
+            #If that player is out, remove them
             if player.chips <= 0:
               self.remove_player(player.position)
               time.sleep(speed)
               if player.position == 0:
                 print('You have been knocked out!\n')
+                finish = True
+                return
               else:
-                print(str(player.name) + '(' + str(player.position) + ') has been knocked out!\n')
+                print(str(player.name) + ' has been knocked out!\n')
+        if finish:
+          return
 
         #Collect a list of player positions still in the game
         pnums = [0]
         for player in self.players:
             pnums.append(player.position)
+        if len(pnums) == 1:
+          return
 						
 				#Increment the blinds or dealer positions if they were knocked out
         while bbpos not in pnums:
@@ -452,6 +496,7 @@ class Game:
         #Raise blinds every 5 rounds
         if self.round % 5 == 0:
             self.raise_blinds()
+            print('The blinds have gone up to ' + str(self.lb) + ' and ' + str(self.bb) + '.')
         print 'The new big blind is ' + self.find_bb_name()
         print 'The new little blind is ' + self.find_lb_name()
         print 'The new dealer is ' + self.find_dealer_name()
@@ -948,5 +993,12 @@ class Card:
         return val + ' of ' + soot
 
 game = Game(no_of_players, big_blind, little_blind, 2, buy_in)
+
+print('Beginning poker protocol.')
+time.sleep(turn_end_speed)
+print('\nYou are playing with:')
+for nooooo in [1, 2, 3, 4, 5]:
+  print(str(names[nooooo]))
+time.sleep(turn_end_speed)
 
 game.run()
