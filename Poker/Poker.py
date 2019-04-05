@@ -1,10 +1,15 @@
 import random
 import time
 
+#TODO - All-in bets, removing players and keeping the blind orders, fix the position/number issues with betting orders, split pots, heads up rounds.
+
 names = ['You', 'Steve', 'Betsy', 'Tim', 'Georg', 'Lucy', 'Timagain']
 speed = 0.5
 turn_end_speed = 1.5
-
+no_of_players = 6
+big_blind = 2
+little_blind = 1
+buy_in = 6
 
 class Game:
     def __init__(self, n, bb, lb, increment, start_chips):
@@ -33,6 +38,57 @@ class Game:
                 player_list.append(player)
             self.players = player_list
 
+    def run(self):
+      while len(self.players) > 2:
+        self.start_of_turn()
+        self.blind_betting_round()
+        #Do a flop
+        if len(self.active_players) > 1:
+            self.flop()
+            self.betting_round()
+        #Do the turn
+        if len(self.active_players) > 1:
+            self.turn()
+            print 'There is a ' + self.table_cards[0].show_card() + ', a ' + self.table_cards[1].show_card() + ', a ' + \
+                  self.table_cards[2].show_card() + ', and a ' + self.table_cards[3].show_card() + ' on the table.'
+            self.betting_round()
+        #Do the river
+        if len(self.active_players) > 1:
+            self.river()
+            print 'There is a ' + self.table_cards[0].show_card() + ', a ' + self.table_cards[1].show_card() + ', a ' + \
+                  self.table_cards[2].show_card() + ', a ' + self.table_cards[3].show_card() + ', and a ' + self.table_cards[4].show_card() + ' on the table.'
+            self.betting_round()
+            print 'No more betting. On your backs:\n'
+        #Chack everyone's hands and calculate the winner
+        for i in range(len(self.active_players)):
+            player_number = self.active_players[i]
+            player = self.players[player_number]
+            hand = player.cards
+            card1 = player.cards[0].show_card()
+            card2 = player.cards[1].show_card()
+            name = str(player.name)
+            if player.name == 'You':
+                print 'You reveal your hand of ' + card1 + ' and ' + card2 + '.'
+            else:
+                print name + ' reveals their hand of ' + card1 + ' and ' + card2 + '.'
+            time.sleep(speed)
+            self.hand_reader(i)
+            time.sleep(speed)
+        #Give the winner the chips, and rejig the blinds
+        self.end_of_turn()
+        #If you are knocked out, the game ends
+        if self.players[0].name != 'You':
+          print "You lose!"
+          return
+        print 'Next round begins in:'
+        time.sleep(turn_end_speed)
+        print '3'
+        time.sleep(turn_end_speed)
+        print '2'
+        time.sleep(turn_end_speed)
+        print '1'
+        time.sleep(turn_end_speed)
+
     def find_lb(self):
         for player in self.players:
             if player.LB == 1:
@@ -47,6 +103,21 @@ class Game:
         for player in self.players:
             if player.Dealer == 1:
                 return player.position
+
+    def find_lb_name(self):
+        for player in self.players:
+            if player.LB == 1:
+                return player.name
+
+    def find_bb_name(self):
+        for player in self.players:
+            if player.BB == 1:
+                return player.name
+
+    def find_dealer_name(self):
+        for player in self.players:
+            if player.Dealer == 1:
+                return player.name
 
     def display_used_cards(self):
         for card in self.used_cards:
@@ -135,10 +206,9 @@ class Game:
         bb_pos = self.find_bb()
         lb_pos = self.find_lb()
         time.sleep(speed)
-        print(self.players[lb_pos].name + ' is the small blind and bets ' + str(game.lb) + '. ' + self.players[
-            bb_pos].name + ' is the big blind and bets ' + str(bb) + '.')
-        self.bets[bb_pos] = bb
+        print(self.find_lb_name() + ' is the small blind and bets ' + str(game.lb) + '. ' + self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '.')
         self.bets[lb_pos] = self.lb
+        self.bets[bb_pos] = bb
         i = 0
         player_index = (bb_pos+1) % len(self.players)
         iterations = len(self.active_players)
@@ -201,9 +271,12 @@ class Game:
                     elif action == 'fold':
                         folded = 1
                         user_acted = 1
+                    elif action == 'info':
+                        print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and ' + self.players[0].cards[1].show_card())
+                        self.hand_reader(0)
                     else:
                         time.sleep(speed)
-                        print('Please choose from: check, call, raise , or fold.')
+                        print('Please choose from: check, call, raise, fold, or info.')
                 new_player_index = self.active_players[(self.active_players.index(player_index) + 1) % len(self.active_players)]
                 if folded == 1:
                     self.active_players.remove(player_index)
@@ -212,7 +285,9 @@ class Game:
         for player in self.players:
             player_index = player.position
             self.pot += self.bets[player_index]
-            self.players[player_index].chips -= self.bets[player_index]
+            for player in self.players:
+              if player.position == player_index:
+                player.chips -= self.bets[player_index]
         time.sleep(speed)
         print('There are ' + str(self.pot) + ' chips in the pot.')
 
@@ -221,9 +296,9 @@ class Game:
         bb = self.bb
         lb_pos = self.find_lb()
         while lb_pos not in self.active_players:
-            lb_pos += 1
+            lb_pos = (lb_pos + 1) % len(self.active_players)
         time.sleep(speed)
-        print(self.players[lb_pos].name + ' to bet first.')
+        print(self.find_lb_name() + ' to bet first.')
         i = 0
         player_index = lb_pos
         iterations = len(self.active_players)
@@ -287,9 +362,12 @@ class Game:
                     elif action == 'fold':
                         folded = 1
                         user_acted = 1
+                    elif action == 'info':
+                      print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and ' + self.players[0].cards[1].show_card())
+                      self.hand_reader(0)
                     else:
                         time.sleep(speed)
-                        print('Please choose from: check, call, raise , or fold.')
+                        print('Please choose from: check, call, raise, fold, or info.')
                 new_player_index = self.active_players[
                     (self.active_players.index(player_index) + 1) % len(self.active_players)]
                 if folded == 1:
@@ -298,7 +376,9 @@ class Game:
                 i += 1
         for player in self.players:
             player_index = player.position
-            self.players[player_index].chips -= self.bets[player_index]
+            for player in self.players:
+              if player.position == player_index:
+                player.chips -= self.bets[player_index]
             self.pot += self.bets[player_index]
 
     def active_bets_equal(self):
@@ -318,29 +398,63 @@ class Game:
         print(self.players[winner].name + ' won a pot of ' + str(self.pot) + ' chips.\n')
         self.round += 1
         self.used_cards = []
+        #find blinds and dealer position
         bbpos = self.find_bb()
+        lbpos = self.find_lb()
+        dealpos = self.find_dealer()
+        #unset all blind and dealer status
         for player in self.players:
+            player.unset_bb()
+            player.unset_lb()
+            player.unset_dealer()
+        #increment blind and dealer positions by 1 (mod no of players)
+        bbpos = (bbpos + 1) % no_of_players
+        lbpos = (lbpos + 1) % no_of_players
+        dealpos = (dealpos + 1) % no_of_players
+				#remember the winner
+        winpos = self.players[winner].position
+        #Then, for every player
+        for player in self.players:
+            #Everyone puts their cards back
             player.cards = []
-            if player.position == self.players[winner].position:
+            #Winner gets the cash
+            if player.position == winpos:
                 player.chips += self.pot
-            if player.BB == 1:
-                player.LB = 1
-                player.BB = 0
-            elif player.LB == 1:
-                    player.LB = 0
-                    player.Dealer = 1
-            elif player.Dealer == 1:
-                    player.Dealer = 0
-        bbpos = (bbpos + 1) % len(self.players)
-        self.players[bbpos].set_bb()
-
-        for player in self.players:
+#############If that player is out, remove them#################
             if player.chips <= 0:
-                self.remove_player(player.position)
-                time.sleep(speed)
-                print('Player ' + str(player.position) + ' has been knocked out!\n')
+              self.remove_player(player.position)
+              time.sleep(speed)
+              if player.position == 0:
+                print('You have been knocked out!\n')
+              else:
+                print(str(player.name) + '(' + str(player.position) + ') has been knocked out!\n')
+
+        #Collect a list of player positions still in the game
+        pnums = [0]
+        for player in self.players:
+            pnums.append(player.position)
+						
+				#Increment the blinds or dealer positions if they were knocked out
+        while bbpos not in pnums:
+						bbpos = (bbpos + 1) % no_of_players
+        while lbpos not in pnums:
+						lbpos = (lbpos + 1) % no_of_players
+        while dealpos not in pnums:
+						dealpos = (dealpos + 1) % no_of_players
+				#Then set the blinds and dealer positions accordingly
+        for player in self.players:
+					if player.position == bbpos:
+						player.set_bb()
+					if player.position == lbpos:
+						player.set_lb()
+					if player.position == dealpos:
+						player.set_dealer()
+        #Raise blinds every 5 rounds
         if self.round % 5 == 0:
             self.raise_blinds()
+        print 'The new big blind is ' + self.find_bb_name()
+        print 'The new little blind is ' + self.find_lb_name()
+        print 'The new dealer is ' + self.find_dealer_name()
 
     def hand_reader(self, n):
         player_number = self.active_players[n]
@@ -745,7 +859,6 @@ class Game:
         else: score = self.high_card_score(cards)
         return score
 
-
 class Player:
     def __init__(self, chips, pos, name):
         self.name = name
@@ -764,19 +877,21 @@ class Player:
 
     def set_dealer(self):
         self.Dealer = 1
-        self.BB = 0
-        self.LB = 0
 
     def set_bb(self):
         self.BB = 1
-        self.Dealer = 0
-        self.LB = 0
 
     def set_lb(self):
         self.LB = 1
+
+    def unset_dealer(self):
         self.Dealer = 0
+
+    def unset_bb(self):
         self.BB = 0
 
+    def unset_lb(self):
+        self.LB = 0    
 
 class Card:
     def __init__(self, suit, value):
@@ -832,54 +947,6 @@ class Card:
             soot = 'spades'
         return val + ' of ' + soot
 
-
-no_of_players = 6
-big_blind = 2
-little_blind = 1
-buy_in = 200
-
-
 game = Game(no_of_players, big_blind, little_blind, 2, buy_in)
 
-while len(game.players) > 2:
-    game.start_of_turn()
-    game.blind_betting_round()
-    if len(game.active_players) > 1:
-        game.flop()
-        game.betting_round()
-    if len(game.active_players) > 1:
-        game.turn()
-        print 'There is a ' + game.table_cards[0].show_card() + ', a ' + game.table_cards[1].show_card() + ', a ' + \
-              game.table_cards[2].show_card() + ', and a ' + game.table_cards[3].show_card() + ' on the table.'
-        game.betting_round()
-    if len(game.active_players) > 1:
-        game.river()
-        print 'There is a ' + game.table_cards[0].show_card() + ', a ' + game.table_cards[1].show_card() + ', a ' + \
-              game.table_cards[2].show_card() + ', a ' + game.table_cards[3].show_card() + ', and a ' + game.table_cards[
-                  4].show_card() + ' on the table.'
-        game.betting_round()
-        print 'No more betting. On your backs:\n'
-    for i in range(len(game.active_players)):
-        player_number = game.active_players[i]
-        player = game.players[player_number]
-        hand = player.cards
-        card1 = player.cards[0].show_card()
-        card2 = player.cards[1].show_card()
-        name = str(player.name)
-        if player.name == 'You':
-            print 'You reveal your hand of ' +card1 + ' and ' + card2 + '.'
-        else:
-            print name + ' reveals their hand of ' + card1 + ' and ' + card2 + '.'
-        time.sleep(speed)
-        game.hand_reader(i)
-        time.sleep(speed)
-    game.end_of_turn()
-    print 'Next round begins in:'
-    time.sleep(turn_end_speed)
-    print '3'
-    time.sleep(turn_end_speed)
-    print '2'
-    time.sleep(turn_end_speed)
-    print '1'
-    time.sleep(turn_end_speed)
-
+game.run()
