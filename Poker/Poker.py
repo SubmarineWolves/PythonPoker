@@ -9,7 +9,7 @@ turn_end_speed = 1.5
 no_of_players = 6
 big_blind = 2
 little_blind = 1
-buy_in = 2
+buy_in = 100
 
 class Game:
     def __init__(self, n, bb, lb, increment, start_chips):
@@ -214,14 +214,14 @@ class Game:
           else:
             print(self.find_lb_name() + ' is the small blind and bets ' + str(self.lb) + '. ')
           if self.find_bb_name() == 'You':
-            print('You are the big blind, and you bet ' + str(self.lb) + '. ')
+            print('You are the big blind, and you bet ' + str(self.bb) + '. ')
           else:
             print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '.')
         else:
           if self.find_bb_name() == 'You':
             print('You are the big blind, and you bet ' + str(self.bb) + '. There is no little blind.')
           else:
-            print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '. Ther is no little blind.')
+            print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '. There is no little blind.')
         self.bets[lb_pos] = self.lb
         self.bets[bb_pos] = bb
         i = 0
@@ -254,9 +254,9 @@ class Game:
                         print(player.name + ' calls ' + str(to_call) + '.')
                 elif r == 1:
                     # raise
-                    self.bets[player_index] = to_call + bb
+                    self.bets[player_index] = int(to_call) + int(bb)
                     time.sleep(speed)
-                    print(player.name + ' raises to ' + str(to_call + bb) + '.')
+                    print(player.name + ' raises to ' + str(int(to_call) + int(bb)) + '.')
                 else:
                     # fold
                     if to_call != self.bets[player_index]:
@@ -284,26 +284,35 @@ class Game:
                     time.sleep(speed)
                     action = raw_input('What would you like to do?\n')
                     print('')
-                    if action == 'check':
+                    if action.find('check') >= 0:
                         if max(self.bets) == 0:
                             user_acted = 1
                         else:
                             time.sleep(speed)
                             print('You can\'t check when there is already a non-zero bet on the table.')
-                    elif action == 'call':
+                    elif action.find('call') >= 0:
                         self.bets[0] = to_call
                         user_acted = 1
                         time.sleep(speed)
                         print('You bet ' + str(to_call) + ' chips.')
-                    elif action == 'raise':
-                        self.bets[0] = to_call + bb
-                        user_acted = 1
-                        time.sleep(speed)
-                        print('You raise the bet to ' + str(to_call + bb))
-                    elif action == 'fold':
+                    elif action.find('raise') >= 0:
+                        raiseval = ''.join(ints for ints in action if ints.isdigit())
+                        if raiseval != '' and int(raiseval) >= (to_call + bb):
+                          self.bets[0] = raiseval
+                          user_acted = 1
+                          time.sleep(speed)
+                          print('You raise the bet to ' + str(raiseval))
+                        elif raiseval != '' and int(raiseval) < (int(to_call) + int(bb)) and int(raiseval) > 0:
+                          print('Please choose an amount to which to raise that is at least the current bet plus the big blind (which is ' + str(to_call) + ' + ' + str(bb) + ').')
+                        else:
+                          self.bets[0] = int(to_call) + int(bb)
+                          user_acted = 1
+                          time.sleep(speed)
+                          print('You raise the bet to ' + str(int(to_call) + int(bb)))
+                    elif action.find('fold') >= 0:
                         folded = 1
                         user_acted = 1
-                    elif action == 'info':
+                    elif action.find('info') >= 0:
                         print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and ' + self.players[0].cards[1].show_card())
                         self.hand_reader(0)
                     else:
@@ -316,10 +325,10 @@ class Game:
                 i += 1
         for player in self.players:
             player_index = player.position
-            self.pot += self.bets[player_index]
+            self.pot += int(self.bets[player_index])
             for player in self.players:
               if player.position == player_index:
-                player.chips -= self.bets[player_index]
+                player.chips -= int(self.bets[player_index])
         time.sleep(speed)
         print('There are ' + str(self.pot) + ' chips in the pot.')
 
@@ -356,9 +365,9 @@ class Game:
                         print(player.name + ' calls ' + str(to_call) + '.')
                 elif r == 1:
                     # raise
-                    self.bets[player_index] = to_call + bb
+                    self.bets[player_index] = int(to_call) + int(bb)
                     time.sleep(speed)
-                    print(player.name + ' raises to ' + str(to_call + bb) + '.')
+                    print(player.name + ' raises to ' + str(int(to_call) + int(bb)) + '.')
                 else:
                     # fold
                     if to_call != self.bets[player_index]:
@@ -380,26 +389,35 @@ class Game:
                 while user_acted == 0:
                     time.sleep(speed)
                     action = raw_input('What would you like to do?\n')
-                    if action == 'check':
+                    if action.find('check') >= 0:
                         if max(self.bets) == 0:
                             user_acted = 1
                         else:
                             time.sleep(speed)
                             print('You can\'t check when there is already a non-zero bet on the table.')
-                    elif action == 'call':
+                    elif action.find('call') >= 0:
                         self.bets[0] = to_call
                         user_acted = 1
                         time.sleep(speed)
                         print('You bet ' + str(to_call) + ' chips.')
-                    elif action == 'raise':
-                        self.bets[0] = to_call + bb
-                        user_acted = 1
-                        time.sleep(speed)
-                        print('You raise the bet to ' + str(to_call + bb))
-                    elif action == 'fold':
+                    elif action.find('raise') >= 0:
+                        raiseval = ''.join(ints for ints in action if ints.isdigit())
+                        if raiseval != '' and int(raiseval) >= (to_call + bb):
+                          self.bets[0] = raiseval
+                          user_acted = 1
+                          time.sleep(speed)
+                          print('You raise the bet to ' + str(raiseval))
+                        elif raiseval != '' and int(raiseval) < (to_call + bb) and int(raiseval) > 0:
+                          print('Please choose an amount to which to raise that is at least the current bet plus the big blind (which is ' + str(to_call) + ' + ' + str(bb) + ').')
+                        else:
+                          self.bets[0] = int(to_call) + int(bb)
+                          user_acted = 1
+                          time.sleep(speed)
+                          print('You raise the bet to ' + str(to_call + bb))
+                    elif action.find('fold') >= 0:
                         folded = 1
                         user_acted = 1
-                    elif action == 'info':
+                    elif action.find('info') >= 0:
                       print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and ' + self.players[0].cards[1].show_card())
                       self.hand_reader(0)
                     else:
@@ -415,8 +433,8 @@ class Game:
             player_index = player.position
             for player in self.players:
               if player.position == player_index:
-                player.chips -= self.bets[player_index]
-            self.pot += self.bets[player_index]
+                player.chips -= int(self.bets[player_index])
+            self.pot += int(self.bets[player_index])
 
     def active_bets_equal(self):
         for i in self.active_players:
