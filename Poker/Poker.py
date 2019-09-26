@@ -1,19 +1,20 @@
 import random
 import time
 
-#TODO - All-in bets, removing players and keeping the blind orders, fix the position/number issues with betting orders (think this is done), split pots, heads up rounds, allow raises by more than the standard blind.
+# TODO - All-in bets, removing players and keeping the blind orders, split pots, heads up rounds.
 
 names = ['You', 'Steve', 'Betsy', 'Tim', 'Georg', 'Lucy', 'Spare Boi']
-speed = 0.2
+speed = 0.8
 turn_end_speed = 1.5
 no_of_players = 6
 big_blind = 2
 little_blind = 1
 buy_in = 100
 
+
 class Game:
     def __init__(self, n, bb, lb, increment, start_chips):
-        if n < 3:
+        if n < 4:
             raise ValueError('Too few players to start game')
         else:
             self.active_players = list(range(n))
@@ -39,57 +40,59 @@ class Game:
             self.players = player_list
 
     def run(self):
-      while len(self.players) >= 2:
-        self.start_of_turn()
-        self.blind_betting_round()
-        #Do a flop
-        if len(self.active_players) > 1:
-            self.flop()
-            self.betting_round()
-        #Do the turn
-        if len(self.active_players) > 1:
-            self.turn()
-            print 'There is a ' + self.table_cards[0].show_card() + ', a ' + self.table_cards[1].show_card() + ', a ' + \
-                  self.table_cards[2].show_card() + ', and a ' + self.table_cards[3].show_card() + ' on the table.'
-            self.betting_round()
-        #Do the river
-        if len(self.active_players) > 1:
-            self.river()
-            print 'There is a ' + self.table_cards[0].show_card() + ', a ' + self.table_cards[1].show_card() + ', a ' + \
-                  self.table_cards[2].show_card() + ', a ' + self.table_cards[3].show_card() + ', and a ' + self.table_cards[4].show_card() + ' on the table.'
-            self.betting_round()
-            print 'No more betting. On your backs:\n'
-        #Chack everyone's hands and calculate the winner
-        for i in range(len(self.active_players)):
-            player_number = self.active_players[i]
-            player = self.players[player_number]
-            hand = player.cards
-            card1 = player.cards[0].show_card()
-            card2 = player.cards[1].show_card()
-            name = str(player.name)
-            if player.name == 'You':
-                print 'You reveal your hand of ' + card1 + ' and ' + card2 + '.'
-            else:
-                print name + ' reveals their hand of ' + card1 + ' and ' + card2 + '.'
-            time.sleep(speed)
-            self.hand_reader(i)
-            time.sleep(speed)
-        #Give the winner the chips, and rejig the blinds
-        self.end_of_turn()
-        #If you are knocked out, the game ends
-        if self.players[0].name != 'You':
-          print "You lose!"
-          return
-        print 'Next round begins in:'
-        time.sleep(turn_end_speed)
-        print '3'
-        time.sleep(turn_end_speed)
-        print '2'
-        time.sleep(turn_end_speed)
-        print '1'
-        time.sleep(turn_end_speed)
-      if self.players[0].name == 'You':
-        print('You won!!!!\nCongrendulsted!')
+        while len(self.players) >= 2:
+            self.start_of_turn()
+            self.blind_betting_round()
+            # Do a flop
+            if len(self.active_players) > 1:
+                self.flop()
+                self.betting_round()
+            # Do the turn
+            if len(self.active_players) > 1:
+                self.turn()
+                print('There is a ' + self.table_cards[0].show_card() + ', a ' + self.table_cards[1].show_card()
+                      + ', a ' + self.table_cards[2].show_card() + ', and a '
+                      + self.table_cards[3].show_card() + ' on the table.')
+                self.betting_round()
+            # Do the river
+            if len(self.active_players) > 1:
+                self.river()
+                print('There is a ' + self.table_cards[0].show_card() + ', a ' + self.table_cards[1].show_card()
+                      + ', a ' + self.table_cards[2].show_card() + ', a ' + self.table_cards[3].show_card() +
+                      ', and a ' + self.table_cards[4].show_card() + ' on the table.')
+                self.betting_round()
+                print('No more betting. On your backs:\n')
+            # Check everyone's hands and calculate the winner
+            for i in range(len(self.active_players)):
+                player_number = self.active_players[i]
+                player = self.players[player_number]
+                hand = player.cards
+                card1 = hand[0].show_card()
+                card2 = hand[1].show_card()
+                name = str(player.name)
+                if player.name == 'You':
+                    print('You reveal your hand of ' + card1 + ' and ' + card2 + '.')
+                else:
+                    print(name + ' reveals their hand of ' + card1 + ' and ' + card2 + '.')
+                time.sleep(speed)
+                self.hand_reader(i)
+                time.sleep(speed)
+            # Give the winner the chips, and rejig the blinds
+            self.end_of_turn()
+            # If you are knocked out, the game ends
+            if self.players[0].name != 'You':
+                print("You lose!")
+                return
+            print('Next round begins in:')
+            time.sleep(turn_end_speed)
+            print('3')
+            time.sleep(turn_end_speed)
+            print('2')
+            time.sleep(turn_end_speed)
+            print('1')
+            time.sleep(turn_end_speed)
+        if self.players[0].name == 'You':
+            print('You won!!!!\nCongrendulsted!')
 
     def find_lb(self):
         for player in self.players:
@@ -155,7 +158,7 @@ class Game:
 
     def start_of_turn(self):
         self.bets = [0] * len(self.players)
-        self.active_players = range(len(self.players))
+        self.active_players = list(range(len(self.players)))
         self.pot = 0
 
         for player in self.players:
@@ -203,47 +206,51 @@ class Game:
         self.table_cards.append(card_five)
 
     def blind_betting_round(self):
-        self.bets = [0] * self.number_of_players
-        bb = self.bb
-        bb_pos = self.find_bb()
-        lb_pos = self.find_lb()
+        self.bets = [0] * self.number_of_players  # Initialise the list of bets
+        bb = self.bb  # This is an int value of the minimum bet
+        bb_pos = self.find_bb()  # bb_pos is an int corresponding to the player number who is the big blind
+        lb_pos = self.find_lb()  # lb_pos is an int corresponding to the player number who is the little blind
         time.sleep(speed)
-        if self.find_bb_name() != self.find_lb_name():
-          if self.find_lb_name() == 'You':
-            print('You are the little blind, and you bet ' + str(bb) + '.')
-          else:
-            print(self.find_lb_name() + ' is the small blind and bets ' + str(self.lb) + '. ')
-          if self.find_bb_name() == 'You':
-            print('You are the big blind, and you bet ' + str(self.bb) + '. ')
-          else:
-            print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '.')
-        else:
-          if self.find_bb_name() == 'You':
-            print('You are the big blind, and you bet ' + str(self.bb) + '. There is no little blind.')
-          else:
-            print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '. There is no little blind.')
+        if self.find_bb_name() != self.find_lb_name():  # Regular case
+            if self.find_lb_name() == 'You':
+                print('You are the little blind, and you bet ' + str(bb) + '.')
+            else:
+                print(self.find_lb_name() + ' is the small blind and bets ' + str(self.lb) + '. ')
+            if self.find_bb_name() == 'You':
+                print('You are the big blind, and you bet ' + str(self.bb) + '. ')
+            else:
+                print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '.')
+        else:  # If the big blind is the little blind
+            if self.find_bb_name() == 'You':
+                print('You are the big blind, and you bet ' + str(self.bb) + '. There is no little blind.')
+            else:
+                print(self.find_bb_name() + ' is the big blind and bets ' + str(bb) + '. There is no little blind.')
         self.bets[lb_pos] = self.lb
-        self.bets[bb_pos] = bb
+        self.bets[bb_pos] = bb  # This will overwrite the little blind if the bb and lb are the same person.
         i = 0
-        #Here we need to make sure that when we increment the player index, it goes to a live player and not someone who is no longer active.
+        # Here we need to make sure that when we increment the player index, it goes to a live player and
+        # not someone who is no longer active.
         poss = [0]
         for player in self.players:
-          poss.append(player.position)
+            poss.append(player.position)
         player_index = (bb_pos+1) % no_of_players
         while player_index not in poss:
-          player_index = (player_index+1) % no_of_players
+            player_index = (player_index+1) % no_of_players  # player_index is who is betting first.
+        # Now that that's done, we set iterations = the fewest number of player actions this betting round
         iterations = len(self.active_players)
-        while i < iterations or not self.active_bets_equal():
-            #Set player equal to the player whose position is player_index
+        while i < iterations or not self.active_bets_equal():   # This will stop only if everyone has has at least one
+                                                                # action, and the bets are equal
+            temp_player = []  # Literally just to suppress the error
             for player in self.players:
-              if player.position == player_index:
-                iCantThinkOfAVariableName = player
-            player = iCantThinkOfAVariableName
+                if player.position == player_index:  # Find who's going first
+                    temp_player = player
+            player = temp_player
             folded = 0
-            if player_index != 0:
-                to_call = max(self.bets)
+            if player_index != 0:  # This is the workings for the "AI". The human's player_index is 0
+                to_call = max(self.bets)  # to_call is the amount needed to bet in order to stay in the round
                 r = random.randint(0, 5)
-                if r not in [0, 1]:
+                # this is how we determine the actions of the "AI": >1 is call, 1 is fold, 0 is raise.
+                if r > 1:
                     # call
                     if self.bets[player_index] == to_call:
                         time.sleep(speed)
@@ -267,13 +274,14 @@ class Game:
                         time.sleep(speed)
                         print(player.name + ' checks.')
                 i += 1
-                #Get the next player_index
+                # Get the next player_index
+                pno = 0
                 for j in range(len(self.active_players)):
-                  if self.active_players[j] == player_index:
-                    pno = j
+                    if self.active_players[j] == player_index:
+                        pno = j
                 pno = (pno + 1) % len(self.active_players)
                 new_player_index = self.active_players[pno]
-                #And remove this player if they folded
+                # And remove this player if they folded
                 if folded == 1:
                     self.active_players.remove(player_index)
                 player_index = new_player_index
@@ -282,8 +290,13 @@ class Game:
                 user_acted = 0
                 while user_acted == 0:
                     time.sleep(speed)
-                    action = raw_input('What would you like to do?\n')
-                    print('')
+                    action = input("What would you like to do?\n")
+                    new_action = ''.join(action(i) for i in range(len(action)-1))
+                    action = new_action
+                    if action == '':
+                        print('There\'s an empty string here')
+                    else:
+                        print('The input string is \'' + action + '\'')
                     if action.find('check') >= 0:
                         if max(self.bets) == 0:
                             user_acted = 1
@@ -298,27 +311,31 @@ class Game:
                     elif action.find('raise') >= 0:
                         raiseval = ''.join(ints for ints in action if ints.isdigit())
                         if raiseval != '' and int(raiseval) >= (to_call + bb):
-                          self.bets[0] = raiseval
-                          user_acted = 1
-                          time.sleep(speed)
-                          print('You raise the bet to ' + str(raiseval))
-                        elif raiseval != '' and int(raiseval) < (int(to_call) + int(bb)) and int(raiseval) > 0:
-                          print('Please choose an amount to which to raise that is at least the current bet plus the big blind (which is ' + str(to_call) + ' + ' + str(bb) + ').')
+                            self.bets[0] = int(raiseval)
+                            user_acted = 1
+                            time.sleep(speed)
+                            print('You raise the bet to ' + str(raiseval))
+                        elif 0 < int(raiseval) < (int(to_call) + int(bb)):
+                            print('Please choose an amount to which to raise that is at least the current bet plus the '
+                                  'big blind (which is ' + str(to_call) + ' + ' + str(bb) + ').')
                         else:
-                          self.bets[0] = int(to_call) + int(bb)
-                          user_acted = 1
-                          time.sleep(speed)
-                          print('You raise the bet to ' + str(int(to_call) + int(bb)))
+                            self.bets[0] = int(to_call) + int(bb)
+                            user_acted = 1
+                            time.sleep(speed)
+                            print('You raise the bet to ' + str(int(to_call) + int(bb)))
                     elif action.find('fold') >= 0:
                         folded = 1
                         user_acted = 1
                     elif action.find('info') >= 0:
-                        print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and ' + self.players[0].cards[1].show_card())
+                        action = None
+                        print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and '
+                              + self.players[0].cards[1].show_card())
                         self.hand_reader(0)
                     else:
                         time.sleep(speed)
                         print('Please choose from: check, call, raise, fold, or info.')
-                new_player_index = self.active_players[(self.active_players.index(player_index) + 1) % len(self.active_players)]
+                new_player_index = self.active_players[(self.active_players.index(player_index) + 1)
+                                                       % len(self.active_players)]
                 if folded == 1:
                     self.active_players.remove(player_index)
                 player_index = new_player_index
@@ -326,9 +343,9 @@ class Game:
         for player in self.players:
             player_index = player.position
             self.pot += int(self.bets[player_index])
-            for player in self.players:
-              if player.position == player_index:
-                player.chips -= int(self.bets[player_index])
+            for playertwo in self.players:
+                if playertwo.position == player_index:
+                    playertwo.chips -= int(self.bets[player_index])
         time.sleep(speed)
         print('There are ' + str(self.pot) + ' chips in the pot.')
 
@@ -343,10 +360,10 @@ class Game:
         i = 0
         poss = [0]
         for player in self.players:
-          poss.append(player.position)
-        player_index = (lb_pos)
+            poss.append(player.position)
+        player_index = lb_pos
         while player_index not in poss and player_index not in self.active_players:
-          player_index = (player_index+1) % no_of_players
+            player_index = (player_index+1) % no_of_players
         iterations = len(self.active_players)
         while i < iterations or not self.active_bets_equal():
             player = self.players[player_index]
@@ -388,7 +405,7 @@ class Game:
                 user_acted = 0
                 while user_acted == 0:
                     time.sleep(speed)
-                    action = raw_input('What would you like to do?\n')
+                    action = input("What would you like to do?\n")
                     if action.find('check') >= 0:
                         if max(self.bets) == 0:
                             user_acted = 1
@@ -402,25 +419,27 @@ class Game:
                         print('You bet ' + str(to_call) + ' chips.')
                     elif action.find('raise') >= 0:
                         raiseval = ''.join(ints for ints in action if ints.isdigit())
-                        if raiseval != '' and int(raiseval) >= (to_call + bb):
-                          self.bets[0] = raiseval
-                          user_acted = 1
-                          time.sleep(speed)
-                          print('You raise the bet to ' + str(raiseval))
-                        elif raiseval != '' and int(raiseval) < (to_call + bb) and int(raiseval) > 0:
-                          print('Please choose an amount to which to raise that is at least the current bet plus the big blind (which is ' + str(to_call) + ' + ' + str(bb) + ').')
+                        if raiseval != '' and int(raiseval) >= (int(to_call) + int(bb)):
+                            self.bets[0] = raiseval
+                            user_acted = 1
+                            time.sleep(speed)
+                            print('You raise the bet to ' + str(raiseval))
+                        elif 0 < int(raiseval) < (to_call + bb):
+                            print('Please choose an amount to which to raise that is at least the current bet '
+                                  'plus the big blind (which is ' + str(to_call) + ' + ' + str(bb) + ').')
                         else:
-                          self.bets[0] = int(to_call) + int(bb)
-                          user_acted = 1
-                          time.sleep(speed)
-                          print('You raise the bet to ' + str(to_call + bb))
+                            self.bets[0] = int(to_call) + int(bb)
+                            user_acted = 1
+                            time.sleep(speed)
+                            print('You raise the bet to ' + str(to_call + bb))
                     elif action.find('fold') >= 0:
                         folded = 1
                         user_acted = 1
                     elif action.find('info') >= 0:
-                      print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and ' + self.players[0].cards[1].show_card())
-                      self.hand_reader(0)
-                    else:
+                        print('Your cards are: ' + self.players[0].cards[0].show_card() + ' and '
+                              + self.players[0].cards[1].show_card())
+                        self.hand_reader(0)
+                    elif True:
                         time.sleep(speed)
                         print('Please choose from: check, call, raise, fold, or info.')
                 new_player_index = self.active_players[
@@ -431,9 +450,9 @@ class Game:
                 i += 1
         for player in self.players:
             player_index = player.position
-            for player in self.players:
-              if player.position == player_index:
-                player.chips -= int(self.bets[player_index])
+            for playertwo in self.players:
+                if playertwo.position == player_index:
+                    playertwo.chips -= int(self.bets[player_index])
             self.pot += int(self.bets[player_index])
 
     def active_bets_equal(self):
@@ -454,70 +473,70 @@ class Game:
         print(self.players[winner].name + ' won a pot of ' + str(self.pot) + ' chips.\n')
         self.round += 1
         self.used_cards = []
-        #find blinds and dealer position
+        # find blinds and dealer position
         bbpos = self.find_bb()
         lbpos = self.find_lb()
         dealpos = self.find_dealer()
-        #unset all blind and dealer status
+        # unset all blind and dealer status
         for player in self.players:
             player.unset_bb()
             player.unset_lb()
             player.unset_dealer()
-        #increment blind and dealer positions by 1 (mod no of players)
+        # increment blind and dealer positions by 1 (mod no of players)
         bbpos = (bbpos + 1) % no_of_players
         lbpos = (lbpos + 1) % no_of_players
         dealpos = (dealpos + 1) % no_of_players
-				#remember the winner
+        # remember the winner
         winpos = self.players[winner].position
-        #Then, for every player
+        # Then, for every player
         for player in self.players:
-            #Everyone puts their cards back
+            # Everyone puts their cards back
             player.cards = []
-            #Winner gets the cash
+            # Winner gets the cash
             if player.position == winpos:
                 player.chips += self.pot
-            #If that player is out, remove them
+            # If that player is out, remove them
             if player.chips <= 0:
-              self.remove_player(player.position)
-              time.sleep(speed)
-              if player.position == 0:
-                print('You have been knocked out!\n')
-                finish = True
+                self.remove_player(player.position)
+                time.sleep(speed)
+                if player.position == 0:
+                    print('You have been knocked out!\n')
+                    finish = True
+                    return
+                else:
+                    print(str(player.name) + ' has been knocked out!\n')
+            if finish:
                 return
-              else:
-                print(str(player.name) + ' has been knocked out!\n')
-        if finish:
-          return
 
-        #Collect a list of player positions still in the game
+        # Collect a list of player positions still in the game
         pnums = [0]
         for player in self.players:
             pnums.append(player.position)
         if len(pnums) == 1:
-          return
-						
-				#Increment the blinds or dealer positions if they were knocked out
+            return
+
+        # Increment the blinds or dealer positions if they were knocked out
         while bbpos not in pnums:
-						bbpos = (bbpos + 1) % no_of_players
+            bbpos = (bbpos + 1) % no_of_players
         while lbpos not in pnums:
-						lbpos = (lbpos + 1) % no_of_players
+            lbpos = (lbpos + 1) % no_of_players
         while dealpos not in pnums:
-						dealpos = (dealpos + 1) % no_of_players
-				#Then set the blinds and dealer positions accordingly
+            dealpos = (dealpos + 1) % no_of_players
+        # Then set the blinds and dealer positions accordingly
         for player in self.players:
-					if player.position == bbpos:
-						player.set_bb()
-					if player.position == lbpos:
-						player.set_lb()
-					if player.position == dealpos:
-						player.set_dealer()
-        #Raise blinds every 5 rounds
+            if player.position == bbpos:
+                player.set_bb()
+            if player.position == lbpos:
+                player.set_lb()
+            if player.position == dealpos:
+                player.set_dealer()
+        # Raise blinds every 5 rounds
         if self.round % 5 == 0:
             self.raise_blinds()
             print('The blinds have gone up to ' + str(self.lb) + ' and ' + str(self.bb) + '.')
-        print 'The new big blind is ' + self.find_bb_name()
-        print 'The new little blind is ' + self.find_lb_name()
-        print 'The new dealer is ' + self.find_dealer_name()
+        print('The new big blind is ' + self.find_bb_name())
+        print('The new little blind is ' + self.find_lb_name())
+        print('The new dealer is ' + self.find_dealer_name())
 
     def hand_reader(self, n):
         player_number = self.active_players[n]
@@ -525,7 +544,8 @@ class Game:
         tc = self.table_cards
         if tc:
             cards = hand+tc
-        else: cards = hand
+        else:
+            cards = hand
 
         if self.royal_flush_check(cards):
             string = self.royal_flush(cards)
@@ -549,19 +569,19 @@ class Game:
             string = self.high_card(cards)
 
         if self.players[player_number].name == 'You':
-            print 'You have' + string
+            print('You have' + string)
         else:
-            print self.players[player_number].name + ' has' + str(string)
+            print(self.players[player_number].name + ' has' + str(string))
 
     def high_card(self, cards):
-      highest = 0
-      high_card = ''
-      for c in cards:
-          if c.number > highest:
-              highest = c.number
-              high_card = c
-      time.sleep(speed)
-      return ' a high card ' + str(high_card.word_value) + '.'
+        highest = 0
+        high_card = ''
+        for c in cards:
+            if c.number > highest:
+                highest = c.number
+                high_card = c
+        time.sleep(speed)
+        return ' a high card ' + str(high_card.word_value) + '.'
 
     def high_card_score(self, cards):
         highest = 0
@@ -576,19 +596,19 @@ class Game:
         for card1 in cards:
             for card2 in cards:
                 if (card1.number == card2.number) and (not card1.isequal(card2)):
-                  return 1
+                    return 1
 
     def pair(self, cards):
         for card1 in cards:
             for card2 in cards:
                 if (card1.number == card2.number) and (not card1.isequal(card2)):
-                  return ' a pair of ' + str(card1.word_value) + 's'
+                    return ' a pair of ' + str(card1.word_value) + 's'
 
     def pair_score(self, cards):
         for card1 in cards:
             for card2 in cards:
                 if (card1.number == card2.number) and (not card1.isequal(card2)):
-                  return card1.number * 0.01
+                    return card1.number * 0.01
 
     def two_pair_check(self, cards):
         if len(cards) < 4:
@@ -612,23 +632,32 @@ class Game:
                         if card3.is_not_in_list([card1, card2]):
                             for card4 in cards:
                                 if card4.is_not_in_list([card1, card2, card3]):
-                                    if len(cards)>=6:
+                                    if len(cards) >= 6:
                                         for card5 in cards:
                                             if card5.is_not_in_list([card1, card2, card3, card4]):
                                                 for card6 in cards:
                                                     if card6.is_not_in_list([card1, card2, card3, card4, card5]):
-                                                        if card1.number == card2.number and card3.number == card4.number and card5.number == card6.number:
-                                                            if card1.number == min(card1.number, card5.number, card3.number):
-                                                                return ' two pair with ' + str(card5.word_value) + 's and ' + str(card3.word_value) + 's'
-                                                            elif card3.number == min(card1.number, card3.number, card5.number):
-                                                                return ' two pair with ' + str(card1.word_value) + 's and ' + str(card5.word_value) + 's'
-                                                            else: return ' two pair with ' + str(card1.word_value) + 's and ' + str(card3.word_value) + 's'
-                                                        elif card1.number == card2.number and card3.number == card4.number:
+                                                        if card1.number == card2.number and card3.number == \
+                                                                card4.number and card5.number == card6.number:
+                                                            if card1.number == min(card1.number, card5.number,
+                                                                                   card3.number):
+                                                                return ' two pair with ' + str(card5.word_value) + \
+                                                                       's and ' + str(card3.word_value) + 's'
+                                                            elif card3.number == min(card1.number, card3.number,
+                                                                                     card5.number):
+                                                                return ' two pair with ' + str(card1.word_value) + \
+                                                                       's and ' + str(card5.word_value) + 's'
+                                                            else:
+                                                                return ' two pair with ' + str(card1.word_value) + \
+                                                                         's and ' + str(card3.word_value) + 's'
+                                                        elif card1.number == card2.number and card3.number == \
+                                                                card4.number:
                                                             return ' two pair with ' + str(
                                                                 card1.word_value) + 's and ' + str(
                                                                 card3.word_value) + 's'
                                     elif card1.number == card2.number and card3.number == card4.number:
-                                        return ' two pair with ' + str(card1.word_value) + 's and ' + str(card3.word_value) + 's'
+                                        return ' two pair with ' + str(card1.word_value) + 's and ' + \
+                                               str(card3.word_value) + 's'
         return ' created an error, you bitch.'
 
     def two_pair_score(self, cards):
@@ -639,27 +668,38 @@ class Game:
                         if card3.is_not_in_list([card1, card2]):
                             for card4 in cards:
                                 if card4.is_not_in_list([card1, card2, card3]):
-                                    if len(cards)>=6:
+                                    if len(cards) >= 6:
                                         for card5 in cards:
                                             if card5.is_not_in_list([card1, card2, card3, card4]):
                                                 for card6 in cards:
                                                     if card6.is_not_in_list([card1, card2, card3, card4, card5]):
-                                                        if card1.number == card2.number and card3.number == card4.number and card5.number == card6.number:
-                                                            if card1.number == min(card1.number, card5.number, card3.number):
+                                                        if card1.number == card2.number and card3.number == \
+                                                                card4.number and card5.number == card6.number:
+                                                            if card1.number == min(card1.number, card5.number,
+                                                                                   card3.number):
                                                                 if card5.number < card3.number:
-                                                                    return int(card3.number) * 0.01 + int(card5.number) * 0.0001
+                                                                    return int(card3.number) * 0.01 + int(card5.number)\
+                                                                           * 0.0001
                                                                 else:
-                                                                    return int(card5.number) * 0.01 + int(card3.number) * 0.0001
-                                                            elif card3.number == min(card1.number, card3.number, card5.number):
+                                                                    return int(card5.number) * 0.01 + int(card3.number)\
+                                                                           * 0.0001
+                                                            elif card3.number == min(card1.number, card3.number,
+                                                                                     card5.number):
                                                                 if card5.number < card1.number:
-                                                                    return int(card1.number) * 0.01 + int(card5.number) * 0.0001
+                                                                    return int(card1.number) * 0.01 + int(card5.number)\
+                                                                           * 0.0001
                                                                 else:
-                                                                    return int(card5.number) * 0.01 + int(card1.number) * 0.0001
+                                                                    return int(card5.number) * 0.01 + int(card1.number)\
+                                                                           * 0.0001
                                                             else:
                                                                 if card1.number < card3.number:
-                                                                    return int(card3.number) * 0.01 + int(card1.number) * 0.0001
-                                                                else: return int(card1.number) * 0.01 + int(card3.number) * 0.0001
-                                                        elif card1.number == card2.number and card3.number == card4.number:
+                                                                    return int(card3.number) * 0.01 + int(card1.number)\
+                                                                           * 0.0001
+                                                                else:
+                                                                    return int(card1.number) * 0.01 + \
+                                                                             int(card3.number) * 0.0001
+                                                        elif card1.number == card2.number and card3.number == \
+                                                                card4.number:
                                                             if card1.number < card3.number:
                                                                 return int(card3.number) * 0.01 + int(
                                                                     card1.number) * 0.0001
@@ -669,34 +709,35 @@ class Game:
                                     elif card1.number == card2.number and card3.number == card4.number:
                                         if card1.number < card3.number:
                                             return int(card3.number) * 0.01 + int(card1.number) * 0.0001
-                                        else: return int(card1.number) * 0.01 + int(card3.number) * 0.0001
+                                        else:
+                                            return int(card1.number) * 0.01 + int(card3.number) * 0.0001
         return 0
 
     def three_check(self, cards):
-        if len(cards)<3:
+        if len(cards) < 3:
             return 0
         else:
             for card1 in cards:
                 for card2 in cards:
                     for card3 in cards:
-                        if  card1.number == card2.number == card3.number and (not card1.isequal(card2)) and (
+                        if card1.number == card2.number == card3.number and (not card1.isequal(card2)) and (
                                 not card1.isequal(card3)) and (not card3.isequal(card2)):
                             return 1
 
     def three(self, cards):
-        if len(cards)<3:
+        if len(cards) < 3:
             return 0
         else:
             for card1 in cards:
                 for card2 in cards:
                     for card3 in cards:
-                        if  card1.number == card2.number == card3.number and (not card1.isequal(card2)) and (
+                        if card1.number == card2.number == card3.number and (not card1.isequal(card2)) and (
                                 not card1.isequal(card3)) and (not card3.isequal(card2)):
                             time.sleep(speed)
                             return ' three of a kind with ' + str(card1.word_value) + 's'
 
     def straight_check(self, cards):
-        if len(cards)<5:
+        if len(cards) < 5:
             return 0
         else:
             for card1 in cards:
@@ -725,7 +766,8 @@ class Game:
                                     high = ' King'
                                 elif high == 14:
                                     high = 'n Ace'
-                                else: high = ' ' + str(high)
+                                else:
+                                    high = ' ' + str(high)
                                 return ' a' + high + ' high straight.'
 
     def flush_check(self, cards):
@@ -769,7 +811,8 @@ class Game:
                                                     sooot = 'spade'
                                                 elif soot == 'D':
                                                     sooot = 'diamond'
-                                                else: sooot = 'club'
+                                                else:
+                                                    sooot = 'club'
                                                 return ' a ' + sooot + ' flush.'
 
     def full_house_check(self, cards):
@@ -785,7 +828,8 @@ class Game:
                                     if (not card4.isequal(card3)) and (not card4.isequal(card2)) and \
                                             (not card4.isequal(card1)):
                                         for card5 in cards:
-                                            if card1.number == card2.number and card3.number == card4.number == card5.number and (
+                                            if card1.number == card2.number and card3.number == card4.number == \
+                                                    card5.number and (
                                                     not card5.isequal(card4)) and (not card5.isequal(card3)) and \
                                                     (not card5.isequal(card2)) and (not card5.isequal(card1)):
                                                 return 1
@@ -803,10 +847,12 @@ class Game:
                                     if (not card4.isequal(card3)) and (not card4.isequal(card2)) and \
                                             (not card4.isequal(card1)):
                                         for card5 in cards:
-                                            if card1.number == card2.number and card3.number == card4.number == card5.number and (
+                                            if card1.number == card2.number and card3.number == card4.number == \
+                                                    card5.number and (
                                                     not card5.isequal(card4)) and (not card5.isequal(card3)) and \
                                                     (not card5.isequal(card2)) and (not card5.isequal(card1)):
-                                                return ' a full house with ' + card3.word_value + 's over ' + card1.word_value + 's'
+                                                return ' a full house with ' + card3.word_value + 's over ' + \
+                                                       card1.word_value + 's'
 
     def four_check(self, cards):
         if len(cards) < 4:
@@ -879,7 +925,8 @@ class Game:
                                 if (card1.number == card2.number + 1) and (card2.number == card3.number + 1) and (
                                         card3.number == card4.number + 1) and (card4.number == card5.number + 1):
                                     if card1.suit == card2.suit == card3.suit == card4.suit and (
-                                        14 == max(card1.number, card2.number, card3.number, card4.number, card5.number)):
+                                         14 == max(card1.number, card2.number, card3.number, card4.number,
+                                                   card5.number)):
                                         return 1
 
     def royal_flush(self, cards):
@@ -919,8 +966,10 @@ class Game:
             score = 2 + self.two_pair_score(cards)
         elif self.pair_check(cards):
             score = 1 + self.pair_score(cards)
-        else: score = self.high_card_score(cards)
+        else:
+            score = self.high_card_score(cards)
         return score
+
 
 class Player:
     def __init__(self, chips, pos, name):
@@ -955,6 +1004,7 @@ class Player:
 
     def unset_lb(self):
         self.LB = 0    
+
 
 class Card:
     def __init__(self, suit, value):
@@ -1010,13 +1060,15 @@ class Card:
             soot = 'spades'
         return val + ' of ' + soot
 
+
 game = Game(no_of_players, big_blind, little_blind, 2, buy_in)
+
 
 print('Beginning poker protocol.')
 time.sleep(turn_end_speed)
 print('\nYou are playing with:')
-for nooooo in [1, 2, 3, 4, 5]:
-  print(str(names[nooooo]))
+for number in [1, 2, 3, 4, 5]:
+    print(str(names[number]))
 time.sleep(turn_end_speed)
 
 game.run()
